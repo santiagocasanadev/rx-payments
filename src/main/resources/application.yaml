@@ -1,0 +1,68 @@
+server:
+  port: 8080
+
+spring:
+  main:
+    web-application-type: reactive
+
+  r2dbc:
+    url: r2dbc:postgresql://mypaymentdb.cvg62qscysz2.us-east-2.rds.amazonaws.com:5432/postgres?sslMode=require
+    username: admindb
+    password: payments$123
+    pool:
+      enabled: true
+      initial-size: 5
+      max-size: 10
+      max-idle-time: 30m
+      max-life-time: 60m
+      validation-query: SELECT 1
+      acquire-retry: 3
+    properties:
+      schema: public
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret: my-super-secret-key-for-hs256-2026
+
+  kafka:
+    bootstrap-servers: kafka:9092
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+    consumer:
+      group-id: payments-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+      repositories:
+        enabled: false
+
+  sql:
+    init:
+      mode: always
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%X{X-Correlation-Id}] %-5level %logger - %msg%n"
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,loggers
+
+  endpoint:
+    health:
+      show-details: when_authorized
